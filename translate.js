@@ -1,13 +1,18 @@
+// requires
 const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const csv = require("csvtojson");
 
+// paths and file names
 const htmlFileName = "index.html";
 const htmlFileNameAppended = "index-translated.html";
 const htmlFilePath = "./" + htmlFileName;
 const csvFilePath = "./translations.csv";
 
+// global variables
 let csvContent, tagIndex, globalDocument;
+
+// read csv
 csv()
     .fromFile(csvFilePath)
     .then(jsonObj => {
@@ -16,6 +21,9 @@ csv()
         readHtml();
     });
 
+/**
+ * Reads the HTML file and creates a JSDOM object
+ */
 const readHtml = () => {
     fs.readFile(htmlFilePath, (err, data) => {
         if (err) throw err;
@@ -23,14 +31,22 @@ const readHtml = () => {
     });
 };
 
+/**
+ * Processes file
+ * @param {object} dom JSDOM document HTML
+ */
 const processFile = dom => {
     globalDocument = dom.window.document;
     readFile(globalDocument.body);
-    fs.writeFile(htmlFileNameAppended, globalDocument.documentElement.outerHTML, () => {
-        console.log("Complete");
-    });
+    // fs.writeFile(htmlFileNameAppended, globalDocument.documentElement.outerHTML, () => {
+    //     console.log("Complete");
+    // });
 };
 
+/**
+ * Reads through the file and each html child
+ * @param {object} html JSDOM document HTML
+ */
 const readFile = html => {
     if (html.childElementCount !== 0) {
         for (let i = 0; i < html.children.length; i++) {
@@ -48,7 +64,7 @@ const checkCsv = html => {
     let tagId;
     for (let i = 0; i < csvContent.length; i++) {
         if (html.textContent === csvContent[i].en) {
-            console.log("Check:", "Exists");
+            // console.log("Check:", "Exists");
             tagId = csvContent[i].id;
             return;
         }
@@ -62,5 +78,5 @@ const checkCsv = html => {
         html.appendChild(span);
         return;
     }
-    console.log("Check", "Does not exist");
+    // console.log("Check", "Does not exist");
 };
