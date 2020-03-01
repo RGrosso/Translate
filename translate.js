@@ -2,15 +2,46 @@
 const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const csv = require("csvtojson");
+const jsonToCSV = require("json-to-csv");
 
 // paths and file names
 const htmlFileName = "index.html";
-const htmlFileNameAppended = "index-translated.html";
 const htmlFilePath = "./" + htmlFileName;
 const csvFilePath = "./translations.csv";
 
 // global variables
-let csvContent, tagIndex, globalDocument;
+let csvContent,
+    globalDocument,
+    onComplete,
+    translateArray = [];
+
+switch (process.argv[2]) {
+    case "extract":
+        onComplete = () => {
+            extractHtmlLoop(globalDocument.body);
+            console.log(translateArray);
+            let currentLangs = csvContent.map(t => t.en);
+            translateArray = translateArray.filter(val => !currentLangs.includes(val));
+            console.log(translateArray);
+
+            // let translationArrObj = translateArray.map(t => {
+            //     en: t;
+            // });
+
+            // jsonToCSV(translationArrObj, "required.csv")
+            //     .then(() => {
+            //         // success
+            //     })
+            //     .catch(error => {
+            //         // handle error
+            //     });
+        };
+        break;
+
+    case "translate":
+        onComplete = translateHtml;
+        break;
+}
 
 // read csv
 csv()
@@ -37,7 +68,8 @@ const readHtml = () => {
  */
 const processFile = dom => {
     globalDocument = dom.window.document;
-    readFile(globalDocument.body);
+    onComplete && onComplete();
+    // readFile(globalDocument.body);
     // fs.writeFile(htmlFileNameAppended, globalDocument.documentElement.outerHTML, () => {
     //     console.log("Complete");
     // });
@@ -79,4 +111,16 @@ const checkCsv = html => {
         return;
     }
     // console.log("Check", "Does not exist");
+};
+
+const extractHtmlLoop = html => {
+    if (html.childElementCount !== 0) {
+        for (let i = 0; i < html.children.length; i++) {
+            extractHtmlLoop(html.children[i]);
+        }
+        return;
+    }
+    if (html.textContent) {
+        translateArray.push(html.textContent);
+    }
 };
